@@ -57,21 +57,23 @@ def get_api_pages(base_url, endpoint):
     Endpoint aka thing string
     ex. get_api_pages('https://python.zach.lol/api/v1/sales', 'sales')
     '''
-    response = requests.get(base_url)
-    data = response.json()
+    
+    response = requests.get(base_url) # get a response from the base url
+    data = response.json() # assign response json into data
     
     maxpage = data['payload']['max_page'] #set maxpage to the payload's max_page
     
     items_list = [] # initialize list to store pages
 
-    for page in range(1, maxpage+1):
+    for page in range(1, maxpage+1): # loop through pages add them to list
         url = base_url + '?page=' + str(page)
         response = requests.get(url)
         page_data = response.json()
         page_items = page_data['payload'][thing_string]
         items_list += page_items
     
-    return pd.DataFrame(items_list)
+    # convert list of page items to dataframe and return
+    return pd.DataFrame(items_list) 
 
 sales_df = get_api_pages(sales_url, 'sales')
 
@@ -81,8 +83,6 @@ sales_df = get_api_pages(sales_url, 'sales')
 
 # put in csv, index = False so there's no duplicate
 sales_df.to_csv('sales.csv', index=False)
-
-
 
 
 ################# Exercise 5 #################
@@ -100,7 +100,7 @@ sales_full = sales_items.merge(stores_df.set_index('store_id'),
                                 how = 'left', left_on= 'store', 
                                 right_index = True )
 
-# sales full is now the new dataframe
+# ~~~~ sales full is now the new dataframe ~~~~~~
 
 ################# Exercise 6 #################
 # Acquire the Open Power Systems Data for Germany, which has been rapidly 
@@ -110,6 +110,7 @@ sales_full = sales_items.merge(stores_df.set_index('store_id'),
 # You can get the data here:
 # https://raw.githubusercontent.com/jenfly/opsd/master/opsd_germany_daily.csv
 
+# Get dataframe using pd.read_csv function
 ops_germany = pd.read_csv('https://raw.githubusercontent.com/jenfly/opsd/master/opsd_germany_daily.csv')
 
 ################# Exercise 7 #################
@@ -169,9 +170,11 @@ def join_zach_data(df1, df2, df3):
     (items_df, 'item_id'), (stores_df, 'store_id'))
     '''
     
-    # Merge sales and item, set the right table index to the id of that column, then use the right index for the join
+    # Merge df1 and 2, set the right table index to the id of that column, 
+    # then use the right index for the join
     join_1 = df1[0].merge(df2[0].set_index(df2[1]), how='left', left_on = df1[1], right_index = True)
     
+    # merge the joined df to df3
     join_full = join_1.merge(df3[0].set_index(df3[1]), how = 'left', left_on= df1[2], right_index = True )
     
     return join_full
@@ -179,10 +182,12 @@ def join_zach_data(df1, df2, df3):
 def the_whole_shebang():
     '''
     This function does a whole thing with getting the zach data specifically
+    Needs the other functions in this file to work
     '''
-    
+    # get all three dataframes using get full function
     sales_df, items_df, stores_df = get_full_zach_data()
     
+    # join the dataframes together using the join function
     all_sales_data = join_zach_data((sales_df, 'item', 'store'), (items_df, 'item_id'), (stores_df, 'store_id'))
     
     return all_sales_data
