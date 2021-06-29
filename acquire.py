@@ -22,7 +22,7 @@ items_list = []
 # loop through next pages to get them all together
 # need maxpage + 1 because of the way range works
 for page in range(1, maxpage+1):
-    url = items_url + '?page =' + str(page)
+    url = items_url + '?page=' + str(page)
     response = requests.get(url)
     data = response.json()
     page_items = data['payload']['items']
@@ -65,7 +65,7 @@ def get_api_pages(base_url, endpoint):
     items_list = [] # initialize list to store pages
 
     for page in range(1, maxpage+1):
-        url = base_url + '?page =' + str(page)
+        url = base_url + '?page=' + str(page)
         response = requests.get(url)
         page_data = response.json()
         page_items = page_data['payload'][thing_string]
@@ -79,7 +79,8 @@ sales_df = get_api_pages(sales_url, 'sales')
 # Save the data in your files to local csv files so that it will be 
 # faster to access in the future.
 
-
+# put in csv, index = False so there's no duplicate
+sales_df.to_csv('sales.csv', index=False)
 
 
 
@@ -87,11 +88,19 @@ sales_df = get_api_pages(sales_url, 'sales')
 ################# Exercise 5 #################
 # Combine the data from your three separate dataframes into one large dataframe.
 
+# Merge sales and item, set the right table index to the id of that 
+# column, then use the right index for the join
 
+sales_items = sales_df.merge(item_df.set_index('item_id'), how='left', 
+                            left_on = 'item', right_index = True)
 
+# Merge sales/items to stores, set the right table index to the id of 
+# that column, then use the right index for the join
+sales_full = sales_items.merge(stores_df.set_index('store_id'), 
+                                how = 'left', left_on= 'store', 
+                                right_index = True )
 
-
-
+# sales full is now the new dataframe
 
 ################# Exercise 6 #################
 # Acquire the Open Power Systems Data for Germany, which has been rapidly 
@@ -101,11 +110,82 @@ sales_df = get_api_pages(sales_url, 'sales')
 # You can get the data here:
 # https://raw.githubusercontent.com/jenfly/opsd/master/opsd_germany_daily.csv
 
-
+ops_germany = pd.read_csv('https://raw.githubusercontent.com/jenfly/opsd/master/opsd_germany_daily.csv')
 
 ################# Exercise 7 #################
 # Make sure all the work that you have done above is reproducible. 
 # That is, you should put the code above into separate functions in the 
 # acquire.py file and be able to re-run the functions and get the same data.
+
+def get_sales_data(sales_url = 'https://python.zach.lol/api/v1/sales', 
+                    endpoint = sales):
+    '''
+    This function reads in the sales data from the zach api,
+    writes data to a csv file if a local file does not exist, 
+    and returns a df.
+    '''
+
+    if os.path.isfile('sales.csv'):
+        
+        # If csv file exists read in data from csv file.
+        df = pd.read_csv('sales.csv', index_col=0)
+        
+    else:
+        
+        # Read fresh data from db into a DataFrame
+        df = get_api_pages(base_url, endpoint)
+        
+        # Cache data
+        df.to_csv('sales.csv')
+
+    return df
+
+def get_full_zach_data():
+    ''' 
+    This function gets the sales data, the items data, and the stores
+    data. Joins them together into a single dataframe. And returns that
+    dataframe
+    '''
+    base_url = 'https://python.zach.lol/api/v1/'
+
+    endpoint_list = ['sales', 'items', 'stores']
+
+    sales_df = get_sales_data()
+
+    items_df = get_api_pages(base_url + 'items', 'items')
+
+    stores_df = get_api_pages(base_url + 'stores', 'stores')
+    
+    return sales_df, items_df, stores_df
+
+def join_zach_data(df1, df2, df3):
+    '''
+    This function takes in three tuples with the dataframe and the 
+    key for that dataframe to be joined on (i.e. (df, 'key'))
+    Returns one dataframe with them all left joined together. 
+    Df1 needs two keys! for the first join and the second join
+    Joins df1 to df2, then those two to df3
+    i.e. join_zach_data((sales_df, 'item', 'store'), 
+    (items_df, 'item_id'), (stores_df, 'store_id'))
+    '''
+    
+    # Merge sales and item, set the right table index to the id of that column, then use the right index for the join
+    join_1 = df1[0].merge(df2[0].set_index(df2[1]), how='left', left_on = df1[1], right_index = True)
+    
+    join_full = join_1.merge(df3[0].set_index(df3[1]), how = 'left', left_on= df1[2], right_index = True )
+    
+    return join_full
+
+def the_whole_shebang():
+    '''
+    This function does a whole thing with getting the zach data specifically
+    '''
+    
+    sales_df, items_df, stores_df = get_full_zach_data()
+    
+    all_sales_data = join_zach_data((sales_df, 'item', 'store'), (items_df, 'item_id'), (stores_df, 'store_id'))
+    
+    return all_sales_data
+
 
 
