@@ -69,7 +69,7 @@ def get_api_pages(base_url, endpoint):
         url = base_url + '?page=' + str(page)
         response = requests.get(url)
         page_data = response.json()
-        page_items = page_data['payload'][thing_string]
+        page_items = page_data['payload'][endpoint]
         items_list += page_items
     
     # convert list of page items to dataframe and return
@@ -134,7 +134,7 @@ def get_sales_data(sales_url = 'https://python.zach.lol/api/v1/sales',
     else:
         
         # Read fresh data from db into a DataFrame
-        df = get_api_pages(base_url, endpoint)
+        df = get_api_pages(sales_url, endpoint)
         
         # Cache data
         df.to_csv('sales.csv')
@@ -194,3 +194,77 @@ def the_whole_shebang():
 
 
 
+#################### UNIVERSAL DATAFRAME API GETTER ####################
+
+# The 3 functions below can be used to get any amount of dataframes
+# You can copy this into any acquire script
+
+def get_api_pages(base_url, endpoint):
+    ''' 
+    This function takes in a base url, a string of the thing you want
+    Creates a dataframe of all the endpoint's pages in a dataframe
+    The endpoint aka the "thing string"
+    ex. get_api_pages('https://python.zach.lol/api/v1/sales', 'sales')
+    '''
+    response = requests.get(base_url)
+    data = response.json()
+    print(base_url)
+    
+    maxpage = data['payload']['max_page'] #set maxpage to the payload's max_page
+    
+    items_list = [] # initialize list to store pages
+
+    for page in range(1, maxpage + 1):
+        url = base_url + '?page=' + str(page)
+        response = requests.get(url)
+        page_data = response.json()
+        page_items = page_data['payload'][endpoint]
+        items_list += page_items
+    
+    return pd.DataFrame(items_list)
+
+def get_api_data(base_url, endpoint):
+    '''
+    This function reads in the data from an api.
+    If there's a csv of that file it reads from there. if not it creates one
+    uses get_api_pages function
+    '''
+
+    if os.path.isfile(f'{endpoint}.csv'):
+        
+        # If csv file exists read in data from csv file.
+        df = pd.read_csv(f'{endpoint}.csv')
+        
+    else:
+        
+        # Read fresh data from db into a DataFrame
+        df = get_api_pages(base_url, endpoint)
+        
+        # Cache data
+        df.to_csv(f'{endpoint}.csv', index=False)
+
+    return df
+
+####### This is the function you will need to run
+####### Will need a url and a list of your endpoints
+
+def get_all_dataframes_from_api(base_url, endpoint_list):
+    '''
+    This function takes in a url and an endpoint list
+    Endpoint list is list of strings 
+    returns a tuple with all the dataframes in it
+    will need : base_url = 'https://python.zach.lol/api/v1/'
+    endpoint_list = ['sales', 'items', 'stores']
+    '''
+    df_list = [] # initalize dataframe list
+    
+    for endpoint in endpoint_list: # loop through endpoint list that was entered
+    
+        # use exec() function to execute a formatted string
+        # run through get api data function
+        exec(f"{endpoint}_df = get_api_data(base_url + '{endpoint}', '{endpoint}')")
+        
+        # use exec() to append new dataframe to list
+        exec(f"df_list.append({endpoint}_df)")
+    
+    return tuple(df_list)
