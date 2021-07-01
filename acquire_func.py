@@ -160,5 +160,17 @@ def get_all_dataframes_from_api(base_url, endpoint_list):
 
 ###################### Acquire for Germany Data ########################
 def get_germany_data():
-    ops_germany = pd.read_csv('https://raw.githubusercontent.com/jenfly/opsd/master/opsd_germany_daily.csv')
-    return ops_germany
+    '''
+    This function checks to see if there's a cached csv of the opsd data
+    If not it reads the data from the API
+    Returns the dataframe ready for cleaning
+    '''
+    if os.path.isfile('opsd_germany.csv'):
+
+        opsd_germany = pd.read_csv('opsd_germany.csv')
+
+    else:
+        opsd_germany = pd.read_csv('https://raw.githubusercontent.com/jenfly/opsd/master/opsd_germany_daily.csv')
+        opsd_germany.to_csv('opsd_germany.csv', index=False)
+
+    return opsd_germany
