@@ -119,7 +119,7 @@ ops_germany = pd.read_csv('https://raw.githubusercontent.com/jenfly/opsd/master/
 # acquire.py file and be able to re-run the functions and get the same data.
 
 def get_sales_data(sales_url = 'https://python.zach.lol/api/v1/sales', 
-                    endpoint = sales):
+                    endpoint = 'sales'):
     '''
     This function reads in the sales data from the zach api,
     writes data to a csv file if a local file does not exist, 
