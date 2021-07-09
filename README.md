@@ -5,6 +5,8 @@ at codeup.
 
 Some highlights are: 
 
+[Time Series Mini Project about Texas Temperatures](https://github.com/HeatherOrtegaMcMillan/time-series-exercises/blob/main/time_series_project.ipynb)
+
 [My Acquire Functions](https://github.com/HeatherOrtegaMcMillan/time-series-exercises/blob/main/acquire_func.py) 
 
 [Prepare Exercises](https://github.com/HeatherOrtegaMcMillan/time-series-exercises/blob/main/prepare_exercises_notebook.ipynb)
